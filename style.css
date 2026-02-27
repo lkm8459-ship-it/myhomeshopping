@@ -1,0 +1,333 @@
+/* style.css - 오프화이트/브라운 테마 및 모바일 UI */
+
+/* 1. 디자인 토큰 (CSS 변수) */
+:root {
+    --bg-color: #F9F8F6;
+    /* 오프화이트 배경 */
+    --card-bg: #FFFFFF;
+    /* 카드 배경순백색 */
+    --text-main: #333333;
+    --text-sub: #777777;
+    --primary-color: #D4A373;
+    /* 따뜻한 브라운 */
+    --primary-hover: #C39262;
+    --accent-red: #E76F51;
+    /* 특가 알림 붉은색 */
+    --accent-green: #81B29A;
+    /* 여유 상태 초록색 */
+
+    --border-color: #EEEEEE;
+    --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+    --nav-height: 60px;
+}
+
+/* 2. 전역 설정 (Reset & Base) */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'NanumSquareNeo', 'Malgun Gothic', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+    /* 모바일 터치 하이라이트 제거 */
+}
+
+/* 3. 레이아웃 (App Container) */
+#app-container {
+    max-width: 480px;
+    /* 모바일 폭 제한 */
+    margin: 0 auto;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: var(--nav-height);
+    /* 하단 네비게이션 공간 확보 */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 4. 헤더 */
+#app-header {
+    background-color: var(--card-bg);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#header-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--primary-color);
+}
+
+#header-settings {
+    color: var(--text-sub);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* 5. 메인 콘텐츠 (뷰 관리) */
+#main-content {
+    padding: 15px;
+}
+
+.view-section {
+    display: none;
+    /* 기본 역활 숨김 */
+    animation: fadeIn 0.3s ease;
+}
+
+.view-section.active {
+    display: block;
+    /* 활성 뷰만 표시 */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 6. 공통 컴포넌트 */
+.view-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-desc {
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    font-weight: 700;
+}
+
+.btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:active {
+    background-color: var(--primary-hover);
+}
+
+.btn-edit {
+    background-color: transparent;
+    color: var(--text-sub);
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+}
+
+/* 센스 있는 장보기 완료 버튼 */
+.btn-complete-mode {
+    background-color: var(--accent-red);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.input-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.input-form input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.input-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* 7. 하단 네비게이션 탭 */
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    height: var(--nav-height);
+    background-color: var(--card-bg);
+    display: flex;
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: none;
+    border: none;
+    color: var(--text-sub);
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+}
+
+.nav-item i {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+}
+
+.nav-item span {
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+/* 8. 핫딜 카드 (뷰 1) */
+.deal-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    /* a 태그 리셋 */
+    color: inherit;
+}
+
+.deal-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background-color: #eee;
+    /* 로딩 전 배경 */
+}
+
+.deal-info {
+    padding: 12px 15px;
+}
+
+.deal-source {
+    font-size: 0.7rem;
+    color: white;
+    background-color: var(--primary-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 5px;
+    font-weight: 800;
+}
+
+.deal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 8px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* 두 줄 말줄임 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.deal-price {
+    font-size: 1.1rem;
+    color: var(--accent-red);
+    font-weight: 800;
+}
+
+/* 9. 리스트 아이템 공통 (냉장고, 장보기, 키워드) */
+.list-item {
+    background-color: var(--card-bg);
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+}
+
+.item-name {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* 현황판 썸네일 & 토글 버튼 */
+.inventory-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 15px;
+    background-color: #eee;
+}
+
+.inventory-left {
+    display: flex;
+    align-items: center;
+}
+
+.status-toggle {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.status-enough {
+    background-color: var(--accent-green);
+}
+
+.status-low {
+    background-color: var(--accent-red);
+}
+
+/* 텅 빈 상태 메시지 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-sub);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
