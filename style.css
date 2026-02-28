@@ -36,20 +36,27 @@ body {
     color: var(--text-main);
     line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
-    /* 모바일 터치 하이라이트 제거 */
+    overflow-x: hidden;
+    /* 수평 스크롤 방지 */
+    width: 100%;
+}
+
+html {
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* 3. 레이아웃 (App Container) */
 #app-container {
     max-width: 480px;
-    /* 모바일 폭 제한 */
     margin: 0 auto;
     background-color: var(--bg-color);
     min-height: 100vh;
     position: relative;
     padding-bottom: var(--nav-height);
-    /* 하단 네비게이션 공간 확보 */
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    overflow-x: hidden;
+    /* 내부 요소 탈출 방지 */
 }
 
 /* 4. 헤더 */
@@ -213,6 +220,8 @@ body {
 
 .input-form input {
     flex: 1;
+    min-width: 0;
+    /* Flex 내에서 너비 감소 허용 */
     padding: 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -322,10 +331,21 @@ body {
     flex-shrink: 0;
 }
 
-.bg-ppomppu { background-color: #FFADAD; }
-.bg-clien { background-color: #AED6F1; }
-.bg-fmkorea { background-color: #D4A373; }
-.bg-eomisae { background-color: #747CFD; }
+.bg-ppomppu {
+    background-color: #FFADAD;
+}
+
+.bg-clien {
+    background-color: #AED6F1;
+}
+
+.bg-fmkorea {
+    background-color: #D4A373;
+}
+
+.bg-eomisae {
+    background-color: #747CFD;
+}
 
 .deal-info {
     flex: 1;
