@@ -223,7 +223,10 @@ def scrape_arcalive():
 def main():
     print("[INFO] 수집 엔진 가동 (4대 사이트 + 카테고리 자동 분류)")
     
-    FIREBASE_URL = "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json"
+    # 환경변수에서 Firebase DB 기본 URL을 가져오고 결합 오류 방지
+    base_url = os.environ.get("FIREBASE_URL", "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/")
+    FIREBASE_URL = base_url.rstrip("/") + "/deals.json"
+    
     try:
         response = requests.get(FIREBASE_URL, timeout=10)
         old_data = response.json() if response.status_code == 200 else []
@@ -269,11 +272,6 @@ def main():
     # Firebase 업로드
     try:
         print("\n[SYNC] Firebase 동기화 중...")
-        # 최수석 보안 자문: 환경 변수에서 URL을 읽어오며, 없을 경우 기본값 사용
-        FIREBASE_URL = os.environ.get("FIREBASE_URL", "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json")
-        if not FIREBASE_URL.endswith(".json"):
-            FIREBASE_URL += ".json"
-            
         response = requests.put(FIREBASE_URL, json=final_deals, timeout=20)
         if response.status_code == 200:
             print("[SUCCESS] 모든 데이터와 카테고리가 업데이트되었습니다.")
