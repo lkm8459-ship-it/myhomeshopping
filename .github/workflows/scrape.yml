@@ -3,6 +3,9 @@ name: MyHomeShopping Auto Scraper
 on:
   schedule:
     - cron: '0 */2 * * *'
+  # 코드 푸시 시에도 즉시 수집 (테스트 및 빠른 갱신 용도)
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
