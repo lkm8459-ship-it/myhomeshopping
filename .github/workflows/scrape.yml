@@ -2,27 +2,27 @@ name: MyHomeShopping Auto Scraper
 
 on:
   schedule:
-      - cron: '0 */2 * * *'
-        workflow_dispatch:
+    - cron: '0 */2 * * *' # 2시간마다 자동 수집
+  workflow_dispatch: # 수동 실행 가능
 
-        jobs:
-          scrape_job:
-              runs-on: ubuntu-latest
-                  steps:
-                        - name: Checkout code
-                                uses: actions/checkout@v3
+jobs:
+  scrape_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
 
-                                      - name: Set up Python
-                                              uses: actions/setup-python@v4
-                                                      with:
-                                                                python-version: '3.9'
+      - name: 파이썬 설정
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-                                                                      - name: Install dependencies
-                                                                              run: |
-                                                                                        python -m pip install --upgrade pip
-                                                                                                  pip install requests beautifulsoup4
+      - name: 라이브러리 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
 
-                                                                                                        - name: Run Scraper (Security Applied)
-                                                                                                                env:
-                                                                                                                          FIREBASE_URL: ${{ secrets.FIREBASE_URL }}
-                                                                                                                                  run: python scraper.py
+      - name: 스크래퍼 실행 (보안 적용)
+        env:
+          FIREBASE_URL: ${{ secrets.FIREBASE_URL }}
+        run: python scraper.py # 파일이 저장소 루트에 있다고 가정
