@@ -9,12 +9,12 @@ import time
 import random
 
 def get_category(title):
-    """제목을 분석하여 카테고리 자동 분류 (정밀도 대폭 업그레이드)"""
+    """제목을 분석하여 카테고리 자동 분류 (생활용품 제거 -> 기타로 통합)"""
     title = title.lower()
     
     # 1. 먹거리(Food & Drink)
     food_brands = ['cj', 'cj제일제당', '비비고', '농심', '오뚜기', '풀무원', '대상', '청정원', '동원', '동원f&b', '오리온', '초코파이', '삼양식품', '매일', '매일유업', '남양유업', '빙그레', '롯데제과', '롯데푸드', '크라운제과', '해태']
-    food_keywords = ['과일', '채소', '정육', '수산', '계란', '라면', '신라면', '진라면', '햇반', '생수', '물', '커피', '우유', '주스', '냉동', '밀키트', '간편식', '도시락', '과자', '빵', '스낵', '시리얼', '영양제', '건강식품', '고기', '음료', '식품', '쌀', '김치', '만두', '참치', '스팸', '치킨', '피자', '음식', '한우', '삼겹살', '콜라', '사이다', '제로', '초코', '아이스크림', '볶음밥', '돼지', '닭', '소스', '케찹', '즙', '마늘', '양파', '목살', '샐러드', '프로틴', '단백질', '활기력', '알룰로스', '홍삼', '간식', '젤리', '육포', '견과']
+    food_keywords = ['과일', '채소', '정육', '수산', '계란', '라면', '신라면', '진라면', '햇반', '생수', '물', '커피', '우유', '주스', '냉동', '밀키트', '간편식', '도시락', '과자', '빵', '스낵', '시리얼', '영양제', '건강식품', '고기', '음료', '식품', '쌀', '김치', '만두', '참치', '스팸', '치킨', '피자', '음식', '한우', '삼겹살', '콜라', '사이다', '제로', '초코', '아이스크림', '볶음밥', '돼지', '닭', '소스', '케찹', '즙', '마늘', '양파', '목살', '샐러드', '프로틴', '단백질', '활기력', '알룰로스', '홍삼', '간식', '젤리', '육포', '견과', '만두']
 
     # 2. 가전(Electronics)
     elec_brands = ['삼성', '삼성전자', '비스포크', '갤럭시', 'lg', 'lg전자', '오브제', 'sk매직', '위니아', '쿠쿠', '쿠첸', '다이슨', '발뮤다', '애플', '아이폰', '아이패드', '맥북', '에어팟']
@@ -24,7 +24,7 @@ def get_category(title):
     fashion_brands = ['나이키', '아디다스', '푸마', '뉴발란스', '뉴발', '언더아머', '휠라', '노스페이스', '몽클레르', '파타고니아', '아크테릭스', '아식스', '살로몬', '반스', '칼하트', '무신사', '지오다노', '탑텐', '스파오', '잭니클라우스', 'LF', '헤지스']
     fashion_keywords = ['티셔츠', '셔츠', '니트', '맨투맨', '후드', '원피스', '스커트', '바지', '슬랙스', '청바지', '코트', '패딩', '자켓', '속옷', '양말', '레깅스', '운동화', '구두', '샌들', '슬리퍼', '가방', '모자', '안경', '선글라스', '액세서리', '쥬얼리', '시계', '옷', '신발', '잡화', '언더웨어', '스니커즈', '조거', '반팔', '바람막이', '팬티', '브라', '벨트', '지갑', '의류', '패션', '아우터', '트레이닝', '가디건', '숏패딩', '롱패딩']
 
-    # 4. 생활용품(Living)
+    # 4. 생활용품(Living) -> '기타'로 통합을 위한 키워드 유지
     living_brands = ['유한킴벌리', '깨끗한나라', '하기스', '마미포코', '페브리즈', '락앤락', '코렐', '테팔', '해피콜']
     living_keywords = ['세제', '섬유유연제', '휴지', '화장지', '물티슈', '샴푸', '린스', '바디워시', '치약', '칫솔', '비누', '생리대', '기저귀', '수건', '이불', '베개', '프라이팬', '후라이팬', '냄비', '접시', '수납함', '멀티탭', '스탠드', '주방', '마스크', '트리트먼트', '디퓨저', '로션', '크림', '선크림', '건전지', '의자', '책상']
 
@@ -35,11 +35,11 @@ def get_category(title):
     other_services = ['구글플레이', '넷플릭스', '멜론', '지니', '카카오', '네이버', '기프티콘', '이용권', '쿠폰', '상품권']
 
     # --- 복합 조건 판별 로직 ---
-    # 우선순위: 1. 명시적 대괄호 태그 -> 2. 먹거리 -> 3. 가전 -> 4. 의류 -> 5. 생활 -> 6. 기타 특수 -> 7. 최종 기타
+    # 우선순위: 1. 명시적 대괄호 태그 -> 2. 먹거리 -> 3. 가전 -> 4. 의류 -> 5. 최종 기타
     if '[식품]' in title or '[먹거리]' in title: return '식품'
     if '[가전]' in title or '[디지털]' in title: return '가전제품'
     if '[패션]' in title or '[의류]' in title: return '의류'
-    if '[생활]' in title: return '생활용품'
+    if '[생활]' in title: return '기타' # 생활 태그도 기타로 분류
 
     if any(b in title for b in food_brands) or any(k in title for k in food_keywords):
         return '식품'
@@ -50,12 +50,10 @@ def get_category(title):
     if any(b in title for b in fashion_brands) or any(k in title for k in fashion_keywords):
         return '의류'
         
+    # 생활용품 브랜드/키워드 매칭 시에도 '기타' 반환 (사령관님 명령)
     if any(b in title for b in living_brands) or any(k in title for k in living_keywords):
-        return '생활용품'
-        
-    if any(k in title for k in other_pet) or any(k in title for k in other_leisure) or any(k in title for k in other_stationery) or any(k in title for k in other_services):
         return '기타'
-
+        
     return '기타'
 
 def clean_old_deals(deals, days=2):
@@ -80,7 +78,7 @@ def clean_old_deals(deals, days=2):
 def scrape_fmkorea():
     url = "https://www.fmkorea.com/hotdeal"
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
     deals = []
     try:
@@ -131,7 +129,6 @@ def scrape_ppomppu():
     try:
         response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.content, 'html.parser', from_encoding='euc-kr')
-        # 뽐ppu 구조 변경 대응: .baseList-title 클래스를 가진 a 태그를 먼저 찾음
         title_nodes = soup.select('.baseList-title')
         
         for title_a in title_nodes:
@@ -162,7 +159,6 @@ def scrape_ppomppu():
     return deals
 
 def scrape_eomisae():
-    # 인기정보(fs), 패션정보(os), 기타정보(rt)
     targets = {
         "https://eomisae.co.kr/fs": "인기",
         "https://eomisae.co.kr/os": "패션",
@@ -178,12 +174,10 @@ def scrape_eomisae():
             response = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # 어미새 최신 글은 .card_el 형태의 그리드로 나열되어 있음
             cards = soup.select('.card_el')
             count = 0
             
             for card in cards:
-                # 제목 및 링크 추출: a.pjax 태그 내부 텍스트 사용
                 title = ""
                 link = ""
                 title_nodes = card.select('a.pjax')
@@ -195,11 +189,9 @@ def scrape_eomisae():
                 
                 if not title: continue
                 
-                # 이미지 추출: 썸네일 이미지가 이미 그리드에 제공됨
                 img_tag = card.select_one('img')
                 img_url = img_tag.get('src') if img_tag else ""
                 
-                # 대체 이미지 처리 / 경로 변환
                 if img_url == "" or "/images/sub.png" in img_url:
                     img_url = "https://via.placeholder.com/96x96/747cfd/ffffff?text=Eomisae"
                 elif img_url.startswith('//'):
@@ -210,7 +202,7 @@ def scrape_eomisae():
                 tagged_title = f"[{info_type}] {title}"
                 deals.append({
                     "title": tagged_title,
-                    "price": "확인", # 핫딜 게시판 성격상 가격은 본문에 포함되어 있음
+                    "price": "확인", 
                     "link": link,
                     "img": img_url,
                     "source": "Eomisae",
@@ -218,7 +210,7 @@ def scrape_eomisae():
                     "timestamp": datetime.now().isoformat()
                 })
                 count += 1
-                if count >= 15: break # 각 게시판당 최신 15개씩(총 45개)
+                if count >= 15: break
                 
         except Exception as e:
             print(f"Eomisae Error ({info_type}): {e}")
@@ -245,7 +237,6 @@ def scrape_clien():
                 "title": title_text,
                 "price": "확인",
                 "link": link,
-                # 클리앙 목록에는 썸네일이 없어 앱 메인 컬러(D4A373)로 대체 이미지 사용
                 "img": "https://via.placeholder.com/150/D4A373/FFFFFF?text=Clien",
                 "source": "Clien",
                 "category": get_category(title_text),
@@ -259,9 +250,8 @@ def scrape_clien():
 # --- 3. 메인 실행부 ---
 
 def main():
-    print("[INFO] 수집 엔진 가동 (4대 사이트 + 카테고리 자동 분류)")
+    print("[INFO] 수집 엔진 가동 (사이트 + 카테고리 4종 체제)")
     
-    # 환경변수에서 Firebase DB 기본 URL을 가져오고 결합 오류 방지
     base_url = os.environ.get("FIREBASE_URL", "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/")
     FIREBASE_URL = base_url.rstrip("/") + "/deals.json"
     
@@ -290,7 +280,7 @@ def main():
         except Exception as e:
             print(f"   -> {name} 실패: {e}")
     
-    # 데이터 병합 및 중복 제거 (제목 앞 12글자 기준)
+    # 데이터 병합 및 중복 제거
     combined = list({deal['title'][:12]: deal for deal in (old_data + all_deals)}.values())
     
     # 48시간 지난 데이터 삭제
@@ -304,7 +294,7 @@ def main():
         stats[cat] = stats.get(cat, 0) + 1
     
     print("\n[REPORT] 카테고리 자동 분류 결과")
-    for cat in ['식품', '가전제품', '의류', '생활용품', '기타']:
+    for cat in ['식품', '가전제품', '의류', '기타']:
         print(f" - {cat}: {stats.get(cat, 0)}개")
 
     # Firebase 업로드
@@ -312,7 +302,7 @@ def main():
         print("\n[SYNC] Firebase 동기화 중...")
         response = requests.put(FIREBASE_URL, json=final_deals, timeout=20)
         if response.status_code == 200:
-            print("[SUCCESS] 모든 데이터와 카테고리가 업데이트되었습니다.")
+            print("[SUCCESS] 모든 데이터가 업데이트되었습니다.")
         else:
             print(f"[ERROR] 상태코드: {response.status_code}")
     except Exception as e:
