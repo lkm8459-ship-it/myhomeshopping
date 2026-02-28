@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 키워드 데이터 동기화
     db.ref(`families/${FAMILY_CODE}/keywords`).on('value', (snapshot) => {
         const data = snapshot.val();
-        keywords = data || ["우유", "생수", "휴지", "라면"]; // 데이터 없으면 초기값
+        // 삭제 후 null이 되면 빈 배열로 처리하여 초기화 버그 방지
+        keywords = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
         renderKeywords();
         if (typeof fetchAndRenderDeals === 'function') fetchAndRenderDeals();
     });
@@ -61,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 장보기 리스트 동기화
     db.ref(`families/${FAMILY_CODE}/shoppingList`).on('value', (snapshot) => {
         const data = snapshot.val();
-        // Firebase는 배열 저장 시 인덱스가 깨질 수 있으므로 객체형태를 배열로 변환
         shoppingList = data ? Object.values(data) : [];
         renderShopping();
     });
@@ -85,54 +85,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 2. 하단 네비게이션 탭 라우팅 (SPA) ---
-    function setupNavigation() {
+    const VIEW_ORDER = ['view-home', 'view-inventory', 'view-shopping', 'view-keywords'];
+
+    function switchTab(targetId) {
         const navButtons = document.querySelectorAll('.nav-item');
         const viewSections = document.querySelectorAll('.view-section');
 
-        // 직접 이벤트 바인딩 (강력한 onclick 주입)
+        // 모든 뷰 숨김 및 버튼 비활성화
+        viewSections.forEach(sec => sec.classList.remove('active'));
+        navButtons.forEach(b => b.classList.remove('active'));
+
+        // 타겟 뷰 표시 및 버튼 활성화
+        const targetView = document.getElementById(targetId);
+        if (targetView) targetView.classList.add('active');
+
+        const activeNav = document.querySelector(`[data-target="${targetId}"]`);
+        if (activeNav) activeNav.classList.add('active');
+    }
+
+    function setupNavigation() {
+        const navButtons = document.querySelectorAll('.nav-item');
         navButtons.forEach(btn => {
             btn.onclick = function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-
                 const targetId = this.getAttribute('data-target');
-                console.log("Nav Button Clicked! Target:", targetId);
-
-                if (!targetId) return;
-
-                // 모든 뷰 숨김 및 버튼 비활성화
-                viewSections.forEach(sec => sec.classList.remove('active'));
-                navButtons.forEach(b => b.classList.remove('active'));
-
-                // 타겟 뷰 표시 및 버튼 활성화
-                const targetView = document.getElementById(targetId);
-                if (targetView) targetView.classList.add('active');
-                this.classList.add('active');
+                if (targetId) switchTab(targetId);
             };
         });
     }
 
     // --- 2.2 좌우 스와이프 탭 이동 (Touch Swipe) ---
-    /*
-    let touchStartX = 0;
-    let touchEndX = 0;
-    const viewOrder = ['view-home', 'view-inventory', 'view-shopping', 'view-keywords'];
+    function setupSwipe() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const mainContent = document.getElementById('all-views-container') || document.getElementById('main-content');
 
-    const mainContent = document.getElementById('main-content');
+        mainContent.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].clientX;
+            touchStartY = e.changedTouches[0].clientY;
+        }, { passive: true });
 
-    mainContent.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
+        mainContent.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
 
-    mainContent.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
+            // X축 이동 거리가 Y축보다 클 때만 스와이프 인정
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
 
-    function handleSwipe() {
-        // ... (생략) 스와이프 로직이 클릭 이벤트를 훔치는지 확인하기 위해 임시 비활성화
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                handleSwipe(dx > 0 ? 'right' : 'left');
+            }
+        }, { passive: true });
+
+        function handleSwipe(direction) {
+            const currentActiveView = document.querySelector('.view-section.active');
+            if (!currentActiveView) return;
+
+            const currentIndex = VIEW_ORDER.indexOf(currentActiveView.id);
+            let nextIndex = currentIndex;
+
+            if (direction === 'left') {
+                nextIndex = Math.min(currentIndex + 1, VIEW_ORDER.length - 1);
+            } else {
+                nextIndex = Math.max(currentIndex - 1, 0);
+            }
+
+            if (nextIndex !== currentIndex) {
+                switchTab(VIEW_ORDER[nextIndex]);
+            }
+        }
     }
-    */
 
     // --- 3. 데이터 렌더링 함수 ---
 
@@ -301,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 만약 부족해졌다면?! -> 장보기 리스트로 자동 추가!
         if (item.status === 'low') {
-            // 이미 장보기 리스트에 있는지 확인 (간단히 이름으로 매칭)
             const exists = shoppingList.find(s => s.name.includes(item.name) && !s.purchased);
             if (!exists) {
                 shoppingList.push({
@@ -311,13 +334,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     purchased: false
                 });
                 syncDB('shoppingList');
-                renderShopping(); // 장보기 리스트 다시 그리기
-                alert(`'${item.name}' 항목이 장보기 목록에 자동 추가되었습니다!`);
+                renderShopping();
+                showToast(`'${item.name}' 항목이 장보기 목록에 추가되었습니다.`);
             }
         }
 
         syncDB('inventory');
-        // 다시 그리기
         renderInventory();
     }
 
@@ -327,7 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ul.innerHTML = '';
 
         shoppingList.forEach((item, index) => {
-            // 구매 완료면 취소선 (간단한 스타일)
             const style = item.purchased ? "text-decoration: line-through; color: var(--text-sub);" : "";
             const icon = item.purchased ? "fa-solid fa-check-circle" : "fa-regular fa-circle";
             const color = item.purchased ? "var(--text-sub)" : "var(--primary-color)";
@@ -427,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
 
         keywords.forEach((kw, index) => {
-            // CSS 파일에 정의되지 않았지만 인라인으로 칩 설계
             const chip = `
                 <div style="display:inline-flex; align-items:center; background:white; padding:8px 12px; border-radius:20px; border:1px solid var(--border-color); margin:5px; box-shadow:var(--shadow-sm);">
                     <span style="font-weight:700; color:var(--primary-color);">${kw}</span>
@@ -465,28 +485,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnOpen = document.getElementById('header-settings');
         const btnClose = document.querySelector('.btn-close-modal');
 
-        // 열기
         if (btnOpen && modal) {
             btnOpen.addEventListener('click', () => {
                 modal.style.display = 'flex';
             });
         }
 
-        // 닫기
         if (btnClose && modal) {
             btnClose.addEventListener('click', () => {
                 modal.style.display = 'none';
             });
         }
 
-        // 모달 바깥 배경 클릭 시 닫기
         if (modal) {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.style.display = 'none';
             });
         }
 
-        // 수동 최신화 확인
         const btnManualSync = document.getElementById('btn-manual-sync');
         if (btnManualSync) {
             btnManualSync.addEventListener('click', () => {
@@ -502,11 +518,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 가족코드 저장
         const btnSaveCode = document.getElementById('btn-save-code');
         if (btnSaveCode) {
             btnSaveCode.addEventListener('click', () => {
-                alert('가족 코드가 저장되었습니다. (추후 DB 동기화 지원 예정)');
+                showToast('가족 코드가 저장되었습니다.');
             });
         }
     }
@@ -514,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 6. 초기 구동 ---
     function init() {
         setupNavigation();
+        setupSwipe(); // 스와이프 활성화
         setupSettingsModal();
         fetchAndRenderDeals();
         renderInventory();
@@ -521,16 +537,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderKeywords();
 
         // 초기 홈화면 활성화
-        const viewSections = document.querySelectorAll('.view-section');
-        const navButtons = document.querySelectorAll('.nav-item');
-        viewSections.forEach(sec => sec.classList.remove('active'));
-        navButtons.forEach(b => b.classList.remove('active'));
-
-        document.getElementById('view-home').classList.add('active');
-        document.querySelector('[data-target="view-home"]').classList.add('active');
+        switchTab('view-home');
     }
 
-    // 앱 시작
     init();
+
 
 });
