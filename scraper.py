@@ -143,59 +143,46 @@ def scrape_eomisae():
             response = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # 어미새는 table._listA tr 형태로 게시물을 구성
-            rows = soup.select('table._listA tr')
+            # 어미새 최신 글은 .card_el 형태의 그리드로 나열되어 있음
+            cards = soup.select('.card_el')
             count = 0
             
-            for row in rows:
-                # 공지사항이나 일반 글 제외
-                if row.select_one('td.no span') and '공지' in row.select_one('td.no span').text:
-                    continue
-                    
-                title_node = row.select_one('td.title a.pjax:not(.tt_cm)')
-                if not title_node:
-                    continue
-                    
-                title_text = title_node.get_text(strip=True)
-                if not title_text: continue
+            for card in cards:
+                # 제목 및 링크 추출: a.pjax 태그 내부 텍스트 사용
+                title = ""
+                link = ""
+                title_nodes = card.select('a.pjax')
+                for node in title_nodes:
+                    if 'tt_cm' not in node.get('class', []) and 'hx' not in node.get('class', []):
+                        title = node.text.strip()
+                        link = "https://eomisae.co.kr" + node.get('href', '')
+                        break
                 
-                link = "https://eomisae.co.kr" + title_node['href']
+                if not title: continue
                 
-                # 2-Depth 스크래핑: 본문으로 진입하여 실제 이미지를 찾습니다.
-                # 서버 방어 매커니즘(Rate Limit 등)을 회피하기 위해 인간적인 지연(Delay)을 줍니다.
-                time.sleep(random.uniform(0.7, 1.5))
-                img_url = "https://via.placeholder.com/96x96/747cfd/ffffff?text=Eomisae" # 기본값
-                try:
-                    r_detail = requests.get(link, headers=headers, timeout=10)
-                    s_detail = BeautifulSoup(r_detail.text, 'html.parser')
-                    # .xe_content 본문에서 img 태그 추출
-                    content_div = s_detail.select_one('.xe_content')
-                    if content_div:
-                        target_img = content_div.select_one('img')
-                        if target_img:
-                            src = target_img.get('src') or target_img.get('data-original')
-                            if src:
-                                # 상대경로/이중슬래시 완벽 처리
-                                if src.startswith('//'):
-                                    img_url = "https:" + src
-                                elif src.startswith('/'):
-                                    img_url = "https://eomisae.co.kr" + src
-                                else:
-                                    img_url = src
-                except Exception as e_detail:
-                    print(f"2-Depth Image Fetch Error: {e_detail}")
+                # 이미지 추출: 썸네일 이미지가 이미 그리드에 제공됨
+                img_tag = card.select_one('img')
+                img_url = img_tag.get('src') if img_tag else ""
+                
+                # 대체 이미지 처리 / 경로 변환
+                if img_url == "" or "/images/sub.png" in img_url:
+                    img_url = "https://via.placeholder.com/96x96/747cfd/ffffff?text=Eomisae"
+                elif img_url.startswith('//'):
+                    img_url = "https:" + img_url
+                elif img_url.startswith('/'):
+                    img_url = "https://eomisae.co.kr" + img_url
                 
                 deals.append({
-                    "title": f"[{info_type}] {title_text}",
+                    "title": f"[{info_type}] {title}",
                     "price": "확인", # 핫딜 게시판 성격상 가격은 본문에 포함되어 있음
                     "link": link,
                     "img": img_url,
                     "source": "Eomisae",
-                    "category": get_category(title_text),
+                    "category": get_category(title),
                     "timestamp": datetime.now().isoformat()
                 })
                 count += 1
-                if count >= 10: break # 각 게시판당 10개씩(총 30개)
+                if count >= 15: break # 각 게시판당 최신 15개씩(총 45개)
                 
         except Exception as e:
             print(f"Eomisae Error ({info_type}): {e}")

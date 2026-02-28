@@ -396,13 +396,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (initialLen > shoppingList.length) {
             syncDB('inventory');    // 롤백된 냉장고 상태 저장
             syncDB('shoppingList'); // 장보기 정리 내역 저장
-            alert("장보기 목록이 정리되었고, 냉장고의 해당 품목들도 다시 '여유' 상태로 돌아갔습니다! 수고하셨습니다 🛒");
+            showToast("장보기 완료! 냉장고 상태도 업데이트 되었습니다. 🛒");
             renderInventory(); // 냉장고 리스트 재랜더링
             renderShopping();  // 장바구니 재랜더링
         } else {
-            alert("완료 체크된 항목이 없습니다.");
+            showToast("완료 체크된 항목이 없습니다.");
         }
     });
+
+    // 토스트 알림 함수
+    let toastTimeout;
+    function showToast(message) {
+        const toastEl = document.getElementById('toast-message');
+        if (!toastEl) return;
+
+        toastEl.textContent = message;
+        toastEl.classList.remove('toast-hidden');
+        toastEl.classList.add('toast-show');
+
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toastEl.classList.remove('toast-show');
+            toastEl.classList.add('toast-hidden');
+        }, 3000);
+    }
 
     // 3.5 키워드 렌더링
     function renderKeywords() {

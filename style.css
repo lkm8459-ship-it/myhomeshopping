@@ -525,3 +525,33 @@ body {
     flex-shrink: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
+/* Toast Message UI */
+#toast-message {
+    position: fixed;
+    bottom: 80px;
+    /* 네비게이션 바 바로 위 */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 58, 138, 0.9);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 99999;
+    transition: opacity 0.3s ease, bottom 0.3s ease;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.toast-hidden {
+    opacity: 0;
+    bottom: 60px !important;
+}
+
+.toast-show {
+    opacity: 1;
+    bottom: 80px !important;
+}
