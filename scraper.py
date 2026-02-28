@@ -269,6 +269,11 @@ def main():
     # Firebase 업로드
     try:
         print("\n[SYNC] Firebase 동기화 중...")
+        # 최수석 보안 자문: 환경 변수에서 URL을 읽어오며, 없을 경우 기본값 사용
+        FIREBASE_URL = os.environ.get("FIREBASE_URL", "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json")
+        if not FIREBASE_URL.endswith(".json"):
+            FIREBASE_URL += ".json"
+            
         response = requests.put(FIREBASE_URL, json=final_deals, timeout=20)
         if response.status_code == 200:
             print("[SUCCESS] 모든 데이터와 카테고리가 업데이트되었습니다.")
