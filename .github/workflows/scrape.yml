@@ -1,12 +1,28 @@
-name: Scraper Workflow
+name: MyHomeShopping Auto Scraper
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '0 */2 * * *' # 2시간마다 자동 수집
+  workflow_dispatch: # 사령관(형님) 직접 수동 실행 가능
 
 jobs:
   scrape_job:
     runs-on: ubuntu-latest
-
     steps:
-      - name: hello
-        run: echo "hello"
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: 파이썬 최적화 설정
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: 필수 라이브러리 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: 스크래퍼 실행 및 데이터 전송
+        env:
+          FIREBASE_URL: ${{ secrets.FIREBASE_URL }}
+        run: python scraper.py # 파일이 저장소 루트에 있다고 가정
