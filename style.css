@@ -431,12 +431,9 @@ body {
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
-    /* 네비게이션(9999) 위로 올림 */
+    /* 하단 네비게이션(9999)보다 위에 오도록 설정 */
     display: none;
     /* 기본 숨김 상태 보장 */
-
-    z-index: 1000;
-    display: flex;
     justify-content: center;
     align-items: center;
     animation: fadeIn 0.2s;

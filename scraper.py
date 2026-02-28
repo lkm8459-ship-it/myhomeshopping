@@ -12,10 +12,10 @@ def get_category(title):
     """제목을 분석하여 카테고리 자동 분류 (정밀도 대폭 업그레이드)"""
     title = title.lower()
     mapping = {
-        '식품': ['우유', '물', '생수', '햇반', '라면', '커피', '고기', '과자', '음료', '식품', '쌀', '김치', '만두', '참치', '스팸', '계란', '치킨', '피자', '음식', '과일', '한우', '삼겹살', '콜라', '사이다', '제로', '초코', '아이스크림', '볶음밥', '냉동', '돼지', '닭', '소스', '케찹', '즙', '마늘', '양파'],
-        '가전': ['노트북', 'tv', '청소기', '에어프라이어', '모니터', '폰', '갤럭시', '아이폰', '워치', '패드', '컴퓨터', '가전', '냉장고', '키보드', '마우스', '이어폰', '에어팟', '태블릿', '닌텐도', '스위치', '플레이스테이션', '공기청정기', '에어컨', '선풍기'],
+        '먹거리': ['우유', '물', '생수', '햇반', '라면', '커피', '고기', '과자', '음료', '식품', '쌀', '김치', '만두', '참치', '스팸', '계란', '치킨', '피자', '음식', '과일', '한우', '삼겹살', '콜라', '사이다', '제로', '초코', '아이스크림', '볶음밥', '냉동', '돼지', '닭', '소스', '케찹', '즙', '마늘', '양파'],
+        '가전제품': ['노트북', 'tv', '청소기', '에어프라이어', '모니터', '폰', '갤럭시', '아이폰', '워치', '패드', '컴퓨터', '가전', '냉장고', '키보드', '마우스', '이어폰', '에어팟', '태블릿', '닌텐도', '스위치', '플레이스테이션', '공기청정기', '에어컨', '선풍기'],
         '의류': ['옷', '티셔츠', '바지', '청바지', '나이키', '아디다스', '신발', '양말', '패딩', '코트', '운동화', '잡화', '맨투맨', '슬랙스', '자켓', '니트', '언더웨어', '스니커즈', '조거', '반팔', '바람막이', '뉴발란스', '뉴발', '아식스', '살로몬', '반스', '아크테릭스', '칼하트'],
-        '생활': ['화장지', '세제', '샴푸', '칫솔', '치약', '비누', '후라이팬', '냄비', '주방', '물티슈', '마스크', '생리대', '수건', '바디워시', '트리트먼트', '디퓨저', '캠핑', '로션', '크림', '선크림', '영양제', '비타민', '루테인', '유산균', '휴지', '건전지', '의자', '책상']
+        '생활용품': ['화장지', '세제', '샴푸', '칫솔', '치약', '비누', '후라이팬', '냄비', '주방', '물티슈', '마스크', '생리대', '수건', '바디워시', '트리트먼트', '디퓨저', '캠핑', '로션', '크림', '선크림', '영양제', '비타민', '루테인', '유산균', '휴지', '건전지', '의자', '책상']
     }
     
     for cat, keywords in mapping.items():
@@ -189,33 +189,35 @@ def scrape_eomisae():
             
     return deals
 
-def scrape_arcalive():
-    url = "https://arca.live/b/hotdeal"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+def scrape_clien():
+    url = "https://www.clien.net/service/board/sold"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     deals = []
     try:
         response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
-        items = soup.select('a.vrow:not(.notice)')
+        items = soup.select('div.list_item.symph_row')
         
         for item in items:
-            title_node = item.select_one('.title')
+            title_node = item.select_one('span.subject_fixed')
             if not title_node: continue
             title_text = title_node.get_text(strip=True)
-            link = "https://arca.live" + item['href']
+            link_node = item.select_one('a.list_subject')
+            link = "https://www.clien.net" + link_node['href'] if link_node else ""
             
             deals.append({
                 "title": title_text,
                 "price": "확인",
                 "link": link,
-                "img": "https://via.placeholder.com/150?text=ARCA",
-                "source": "Arcalive",
+                # 클리앙 목록에는 썸네일이 없어 앱 메인 컬러(D4A373)로 대체 이미지 사용
+                "img": "https://via.placeholder.com/150/D4A373/FFFFFF?text=Clien",
+                "source": "Clien",
                 "category": get_category(title_text),
                 "timestamp": datetime.now().isoformat()
             })
             if len(deals) >= 20: break
     except Exception as e:
-        print(f"Arcalive Error: {e}")
+        print(f"Clien Error: {e}")
     return deals
 
 # --- 3. 메인 실행부 ---
@@ -237,9 +239,9 @@ def main():
 
     all_deals = []
     scrapers = [
+        ("Clien", scrape_clien),
         ("Ppomppu", scrape_ppomppu),
         ("FM Korea", scrape_fmkorea),
-        ("Arcalive", scrape_arcalive),
         ("Eomisae", scrape_eomisae)
     ]
     
@@ -252,8 +254,8 @@ def main():
         except Exception as e:
             print(f"   -> {name} 실패: {e}")
     
-    # 데이터 병합 및 중복 제거
-    combined = list({deal['title']: deal for deal in (old_data + all_deals)}.values())
+    # 데이터 병합 및 중복 제거 (제목 앞 12글자 기준)
+    combined = list({deal['title'][:12]: deal for deal in (old_data + all_deals)}.values())
     
     # 48시간 지난 데이터 삭제
     final_deals = clean_old_deals(combined, days=2)
@@ -266,7 +268,7 @@ def main():
         stats[cat] = stats.get(cat, 0) + 1
     
     print("\n[REPORT] 카테고리 자동 분류 결과")
-    for cat in ['식품', '가전', '의류', '생활', '기타']:
+    for cat in ['먹거리', '가전제품', '의류', '생활용품', '기타']:
         print(f" - {cat}: {stats.get(cat, 0)}개")
 
     # Firebase 업로드

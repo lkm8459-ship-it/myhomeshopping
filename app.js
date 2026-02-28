@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 1. 전역 변수 및 Firebase 설정 ---
-    const FAMILY_CODE = "jangbogi77";
+    let FAMILY_CODE = localStorage.getItem('familyCode') || "jangbogi77";
 
     const firebaseConfig = {
         databaseURL: "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/"
@@ -337,7 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.btn-complete-mode').addEventListener('click', () => {
         const completed = shoppingList.filter(s => s.purchased);
         completed.forEach(buy => {
-            const inv = inventory.find(i => i.name === buy.name);
+            // 부분 일치도 허용 (예: 장바구니 "우유" -> 냉장고 "서울우유 1L")
+            const inv = inventory.find(i => i.name.includes(buy.name) || buy.name.includes(i.name));
             if (inv) inv.status = 'enough';
         });
         shoppingList = shoppingList.filter(s => !s.purchased);
@@ -401,7 +402,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupSettingsModal() {
         const modal = document.getElementById('settings-modal');
-        document.getElementById('header-settings').onclick = () => modal.style.display = 'flex';
+        const codeInput = document.getElementById('family-code-input');
+
+        document.getElementById('header-settings').onclick = () => {
+            if (codeInput) codeInput.value = FAMILY_CODE;
+            modal.style.display = 'flex';
+        };
         document.querySelector('.btn-close-modal').onclick = () => modal.style.display = 'none';
         modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 
@@ -412,7 +418,17 @@ document.addEventListener('DOMContentLoaded', () => {
             this.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> 수동으로 최신화 확인`;
         };
 
-        document.getElementById('btn-save-code').onclick = () => showToast("가족 코드 저장됨");
+        document.getElementById('btn-save-code').onclick = () => {
+            const newCode = codeInput ? codeInput.value.trim() : "";
+            if (newCode && newCode !== FAMILY_CODE) {
+                FAMILY_CODE = newCode;
+                localStorage.setItem('familyCode', newCode);
+                showToast("가족 코드 변경됨. 동기화를 위해 재시작합니다.");
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(newCode ? "가족 코드가 동일합니다." : "코드를 입력하세요.");
+            }
+        };
     }
 
     function init() {
