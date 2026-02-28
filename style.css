@@ -175,6 +175,22 @@ body {
     background-color: var(--primary-hover);
 }
 
+/* 엘리베이터 이동 버튼 (편집 모드 전용) */
+.btn-move {
+    background: transparent;
+    border: none;
+    color: var(--text-sub);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px;
+    margin-right: 4px;
+    transition: color 0.2s;
+}
+
+.btn-move:hover {
+    color: var(--primary-color);
+}
+
 .btn-edit {
     background-color: transparent;
     color: var(--text-sub);
@@ -369,11 +385,36 @@ body {
     align-items: center;
     justify-content: space-between;
     box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.list-item:active {
+    transform: scale(0.98);
 }
 
 .item-name {
     font-weight: 700;
     font-size: 1rem;
+}
+
+/* 장보기 전용 배지 UI */
+.shopping-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    display: inline-block;
+    width: fit-content;
+}
+
+.badge-manual {
+    background-color: #f0f0f0;
+    color: var(--text-sub);
+}
+
+.badge-auto {
+    background-color: rgba(212, 163, 115, 0.15);
+    color: var(--primary-color);
 }
 
 /* 현황판 썸네일 & 토글 버튼 */

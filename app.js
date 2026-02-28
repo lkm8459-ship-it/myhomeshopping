@@ -24,7 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
         '치약': '🪥', '칫솔': '🪥',
         '영양제': '💊', '비타민': '💊', '루테인': '💊', '유산균': '💊',
         '건전지': '🔋',
-        '마스크': '😷'
+        // [추가된 필수 품목군]
+        '참치': '🐟', '스팸': '🥫', '통조림': '🥫', '소스': '🥫', '케찹': '🍅', '마요네즈': '🥚', '파스타': '🍝',
+        '생리대': '🩸', '세탁세제': '🧺', '섬유유연제': '🌸', '주방세제': '🧽', '수건': '🧖‍♀️',
+        '의류': '👕', '티셔츠': '👕', '바지': '👖', '신발': '👟', '운동화': '👟', '양말': '🧦',
+        '가전': '📺', '노트북': '💻', '컴퓨터': '💻', '청소기': '🧹', '선풍기': '🌬️', '에어컨': '❄️'
     };
 
     function getEmojiForName(name) {
@@ -46,6 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let keywords = [];
     let shoppingList = [];
     let inventory = [];
+
+    // 편집 모드 상태
+    let isInventoryEditMode = false;
+    let isShoppingEditMode = false;
 
     // [중요] Firebase 실시간 리스너
     db.ref(`families/${FAMILY_CODE}/keywords`).on('value', (snapshot) => {
@@ -148,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAndRenderDeals() {
         const feedContainer = document.querySelector('.feed-container');
         try {
-            const response = await fetch("https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json");
+            const response = await fetch(`https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json?_t=${Date.now()}`);
             if (!response.ok) throw new Error("서버 데이터 로드 실패");
 
             let deals = await response.json();
@@ -242,11 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const html = `
                 <div class="list-item">
-                    <div class="inventory-left">
+                    <div class="inventory-left" style="gap:12px;">
                         <div class="emoji-icon">${emoji}</div>
                         <span class="item-name">${item.name}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
+                        ${isInventoryEditMode ? `
+                            <button class="btn-move" onclick="moveInventoryItem(${index}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                            <button class="btn-move" onclick="moveInventoryItem(${index}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+                        ` : ''}
                         <button class="status-toggle ${btnClass}" onclick="appToggleInventory(${index})">${btnText}</button>
                         <button onclick="appDeleteInventory(${index})" style="background:none; border:none; color:var(--text-sub);"><i class="fa-solid fa-xmark"></i></button>
                     </div>
@@ -279,6 +291,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(`'${name}' 삭제됨`);
     };
 
+    window.moveInventoryItem = function (index, direction) {
+        if (index + direction < 0 || index + direction >= inventory.length) return;
+        const temp = inventory[index];
+        inventory[index] = inventory[index + direction];
+        inventory[index + direction] = temp;
+        syncDB('inventory');
+        renderInventory();
+    };
+
     document.getElementById('add-inventory-item-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('new-inventory-input');
@@ -296,15 +317,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const ul = document.querySelector('.shopping-list');
         ul.innerHTML = '';
         shoppingList.forEach((item, index) => {
-            const style = item.purchased ? "text-decoration: line-through; color: var(--text-sub);" : "";
+            const badgeClass = item.source === "직접 입력" ? "badge-manual" : "badge-auto";
+            const style = item.purchased ? "text-decoration: line-through; color: var(--text-sub); opacity: 0.6;" : "";
             const icon = item.purchased ? "fa-solid fa-check-circle" : "fa-regular fa-circle";
             const html = `
                 <li class="list-item" style="${style}">
-                    <div style="display:flex; align-items:center; gap:10px;" onclick="appToggleShopping(${index})">
-                        <i class="${icon}" style="color:${item.purchased ? 'var(--text-sub)' : 'var(--primary-color)'}; font-size:1.2rem;"></i>
-                        <span class="item-name">${item.name} <small style="color:#aaa;">(${item.source})</small></span>
+                    <div style="display:flex; align-items:center; gap:12px; cursor:pointer; flex:1;" onclick="appToggleShopping(${index})">
+                        <i class="${icon}" style="color:${item.purchased ? 'var(--text-sub)' : 'var(--primary-color)'}; font-size:1.3rem;"></i>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <span class="item-name" style="margin:0;">${item.name}</span>
+                            <span class="shopping-badge ${badgeClass}">${item.source}</span>
+                        </div>
                     </div>
-                    <button onclick="appDeleteShopping(${index})" style="background:none; border:none; color:var(--text-sub);"><i class="fa-solid fa-xmark"></i></button>
+                    <div style="display:flex; align-items:center;">
+                        ${isShoppingEditMode ? `
+                            <button class="btn-move" onclick="moveShoppingItem(${index}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                            <button class="btn-move" onclick="moveShoppingItem(${index}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+                        ` : ''}
+                        <button onclick="appDeleteShopping(${index})" style="background:none; border:none; color:var(--text-sub); margin-left:8px; padding:4px;"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </li>
             `;
             ul.insertAdjacentHTML('beforeend', html);
@@ -313,12 +344,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.appToggleShopping = function (index) {
         shoppingList[index].purchased = !shoppingList[index].purchased;
+
+        // 체크된(구매 완료) 항목은 하단으로, 미완료는 상단으로 자동 정렬
+        shoppingList.sort((a, b) => {
+            if (a.purchased === b.purchased) return 0;
+            return a.purchased ? 1 : -1;
+        });
+
         syncDB('shoppingList');
         renderShopping();
     };
 
     window.appDeleteShopping = function (index) {
         shoppingList.splice(index, 1);
+        syncDB('shoppingList');
+        renderShopping();
+    };
+
+    window.moveShoppingItem = function (index, direction) {
+        if (index + direction < 0 || index + direction >= shoppingList.length) return;
+        const temp = shoppingList[index];
+        shoppingList[index] = shoppingList[index + direction];
+        shoppingList[index + direction] = temp;
         syncDB('shoppingList');
         renderShopping();
     };
@@ -435,6 +482,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setupNavigation();
         setupSwipe();
         setupSettingsModal();
+
+        document.getElementById('btn-edit-inventory').addEventListener('click', (e) => {
+            isInventoryEditMode = !isInventoryEditMode;
+            e.currentTarget.innerHTML = isInventoryEditMode ? `<i class="fa-solid fa-check"></i> 완료` : `<i class="fa-solid fa-pen"></i> 편집`;
+            renderInventory();
+        });
+
+        document.getElementById('btn-edit-shopping').addEventListener('click', (e) => {
+            isShoppingEditMode = !isShoppingEditMode;
+            e.currentTarget.innerHTML = isShoppingEditMode ? `<i class="fa-solid fa-check"></i> 완료` : `<i class="fa-solid fa-pen"></i> 편집`;
+            renderShopping();
+        });
+
         fetchAndRenderDeals();
         renderInventory();
         renderShopping();

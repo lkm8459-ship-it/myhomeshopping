@@ -42,7 +42,7 @@
                 <!-- 카테고리 탭 -->
                 <div class="category-tabs" style="position: relative; z-index: 10;">
                     <button class="cat-btn active" data-cat="전체">전체</button>
-                    <button class="cat-btn" data-cat="먹거리">식품</button>
+                    <button class="cat-btn" data-cat="식품">식품</button>
                     <button class="cat-btn" data-cat="가전제품">가전</button>
                     <button class="cat-btn" data-cat="의류">의류</button>
                     <button class="cat-btn" data-cat="생활용품">생활</button>
@@ -81,7 +81,11 @@
             <section id="view-shopping" class="view-section">
                 <div class="view-controls">
                     <p class="section-desc">구매할 항목</p>
-                    <button class="btn btn-complete-mode"><i class="fa-solid fa-check-double"></i> 장보기 완료! 🛒</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-edit" id="btn-edit-shopping"><i class="fa-solid fa-pen"></i> 편집</button>
+                        <button class="btn btn-complete-mode"><i class="fa-solid fa-check-double"></i> 장보기 완료!
+                            🛒</button>
+                    </div>
                 </div>
 
                 <!-- 직접 입력 폼 -->
