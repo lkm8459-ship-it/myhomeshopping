@@ -63,8 +63,14 @@
                 <!-- 상단 컨트롤 라인 -->
                 <div class="view-controls">
                     <p class="section-desc">우리 집 필수품 재고 상태</p>
-                    <button class="btn btn-edit"><i class="fa-solid fa-pen"></i> 편집</button>
+                    <button class="btn btn-edit" id="btn-edit-inventory"><i class="fa-solid fa-pen"></i> 편집</button>
                 </div>
+
+                <!-- 냉장고 품목 직접 추가 폼 -->
+                <form id="add-inventory-item-form" class="input-form">
+                    <input type="text" id="new-inventory-input" placeholder="새 재고 항목 (예: 사과, 계란)" required>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
+                </form>
 
                 <div class="inventory-list">
                     <!-- 현황 항목들이 추가됨 -->
