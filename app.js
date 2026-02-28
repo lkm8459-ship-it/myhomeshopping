@@ -2,6 +2,38 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- 이모지 스마트 매핑 사전 ---
+    const ITEM_EMOJI_MAP = {
+        '삼겹살': '🥩', '고기': '🥩', '소고기': '🥩', '한우': '🥩', '돼지': '🥩', '닭': '🍗', '치킨': '🍗',
+        '우유': '🥛', '두유': '🥛',
+        '계란': '🥚', '달걀': '🥚',
+        '사과': '🍎', '바나나': '🍌', '포도': '🍇', '과일': '🍉',
+        '오이': '🥒', '가시오이': '🥒', '양파': '🧅', '마늘': '🧄', '당근': '🥕', '고추': '🌶️', '채소': '🥬', '야채': '🥬',
+        '김치': '🌶️',
+        '만두': '🥟', '피자': '🍕',
+        '라면': '🍜', '신라면': '🍜', '짜파게티': '🍜',
+        '햇반': '🍚', '쌀': '🍚',
+        '초코': '🍫', '과자': '🍪', '아이스크림': '🍦',
+        '콜라': '🥤', '사이다': '🥤', '제로': '🥤', '음료': '🥤',
+        '생수': '💧', '물': '💧', '삼다수': '💧',
+        '커피': '☕',
+        '빵': '🍞',
+        '화장지': '🧻', '휴지': '🧻',
+        '물티슈': '🧻',
+        '샴푸': '🧴', '로션': '🧴', '바디워시': '🧼', '비누': '🧼', '세제': '🧼',
+        '치약': '🪥', '칫솔': '🪥',
+        '영양제': '💊', '비타민': '💊', '루테인': '💊', '유산균': '💊',
+        '건전지': '🔋',
+        '마스크': '😷'
+    };
+
+    function getEmojiForName(name) {
+        for (const [key, emoji] of Object.entries(ITEM_EMOJI_MAP)) {
+            if (name.includes(key)) return emoji;
+        }
+        return null;
+    }
+
     // --- 1. 전역 변수 및 Firebase 설정 ---
     const FAMILY_CODE = "jangbogi77"; // 우리 가족 데이터 식별용 코드
 
@@ -53,33 +85,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 2. 하단 네비게이션 탭 라우팅 (SPA) ---
-    const navButtons = document.querySelectorAll('.nav-item');
-    const viewSections = document.querySelectorAll('.view-section');
+    function setupNavigation() {
+        const navButtons = document.querySelectorAll('.nav-item');
+        const viewSections = document.querySelectorAll('.view-section');
 
-    function switchView(targetId) {
-        // 모든 뷰 숨김 및 버튼 비활성화
-        viewSections.forEach(sec => sec.classList.remove('active'));
-        navButtons.forEach(btn => btn.classList.remove('active'));
+        // 직접 이벤트 바인딩 (강력한 onclick 주입)
+        navButtons.forEach(btn => {
+            btn.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
 
-        // 타겟 뷰 표시 및 버튼 활성화
-        document.getElementById(targetId).classList.add('active');
-        document.querySelector(`[data-target="${targetId}"]`).classList.add('active');
+                const targetId = this.getAttribute('data-target');
+                console.log("Nav Button Clicked! Target:", targetId);
+
+                if (!targetId) return;
+
+                // 모든 뷰 숨김 및 버튼 비활성화
+                viewSections.forEach(sec => sec.classList.remove('active'));
+                navButtons.forEach(b => b.classList.remove('active'));
+
+                // 타겟 뷰 표시 및 버튼 활성화
+                const targetView = document.getElementById(targetId);
+                if (targetView) targetView.classList.add('active');
+                this.classList.add('active');
+            };
+        });
     }
 
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const target = btn.getAttribute('data-target');
-            switchView(target);
-        });
-    });
+    // --- 2.2 좌우 스와이프 탭 이동 (Touch Swipe) ---
+    /*
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const viewOrder = ['view-home', 'view-inventory', 'view-shopping', 'view-keywords'];
+
+    const mainContent = document.getElementById('main-content');
+
+    mainContent.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    mainContent.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        // ... (생략) 스와이프 로직이 클릭 이벤트를 훔치는지 확인하기 위해 임시 비활성화
+    }
+    */
 
     // --- 3. 데이터 렌더링 함수 ---
 
-    // 3.1 핫딜 피드 렌더링 (Firebase에서 직접 로드)
+    // 전역 핫딜 데이터 캐시
+    let allDealsData = [];
+
+    // 3.1 핫딜 피드 불러오기
     async function fetchAndRenderDeals() {
         const feedContainer = document.querySelector('.feed-container');
         try {
-            // 이제 로컬 data.json이 아니라 Firebase 주소에서 가져옵니다.
             const FIREBASE_DEALS_URL = "https://myhomeshopping-a9724-default-rtdb.firebaseio.com/deals.json";
 
             const response = await fetch(FIREBASE_DEALS_URL);
@@ -91,40 +154,103 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 키워드에 맞는 핫딜을 위로 정렬
-            deals.sort((a, b) => {
-                const aMatched = keywords.some(kw => a.title.includes(kw)) ? 1 : 0;
-                const bMatched = keywords.some(kw => b.title.includes(kw)) ? 1 : 0;
-                return bMatched - aMatched;
-            });
+            // 최신순 (타임스탬프 역순) 정렬 기본 설정
+            deals.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+            allDealsData = deals;
 
-            feedContainer.innerHTML = '';
+            // 마지막 수집 시간 업데이트 (설정 모달용)
+            if (deals.length > 0 && deals[0].timestamp) {
+                const lastTime = new Date(deals[0].timestamp);
+                document.getElementById('last-update-time').innerText = lastTime.toLocaleString('ko-KR');
+            }
 
-            deals.forEach(deal => {
-                const isMatched = keywords.some(kw => deal.title.includes(kw));
-                const matchedHtml = isMatched ? `<span style="color:var(--accent-red); font-size:0.7rem;">🔥 키워드 적중!</span>` : '';
-
-                const card = `
-                    <a href="${deal.link}" target="_blank" class="deal-card">
-                        <img src="${deal.img}" class="deal-img" alt="상품 이미지" onerror="this.src='https://via.placeholder.com/480x180/eee/999?text=No+Image'">
-                        <div class="deal-info">
-                            <div>
-                                <span class="deal-source">${deal.source}</span>
-                                ${matchedHtml}
-                            </div>
-                            <h3 class="deal-title">${deal.title}</h3>
-                            <div class="deal-price">${deal.price}</div>
-                        </div>
-                    </a>
-                `;
-                feedContainer.insertAdjacentHTML('beforeend', card);
-            });
+            // 현재 선택된 탭 기준으로 초기 렌더링
+            renderFilteredDeals();
 
         } catch (error) {
             console.error(error);
             feedContainer.innerHTML = `<div class="empty-state">데이터를 불러오지 못했습니다.</div>`;
         }
     }
+
+    // 3.1.2 선택된 카테고리에 맞춰 필터링 및 화면 그리기
+    function renderFilteredDeals() {
+        const feedContainer = document.querySelector('.feed-container');
+        feedContainer.innerHTML = '';
+
+        const activeCatBtn = document.querySelector('.cat-btn.active');
+        const currentCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : '전체';
+
+        let targetDeals = allDealsData;
+        if (currentCat !== '전체') {
+            targetDeals = allDealsData.filter(d => (d.category || '기타') === currentCat);
+        }
+
+        // 키워드 설정이 있다면 위로 정렬
+        targetDeals.sort((a, b) => {
+            const aMatched = keywords.some(kw => a.title.includes(kw)) ? 1 : 0;
+            const bMatched = keywords.some(kw => b.title.includes(kw)) ? 1 : 0;
+            return bMatched - aMatched; // 1이면 위로
+        });
+
+        if (targetDeals.length === 0) {
+            feedContainer.innerHTML = `<div class="empty-state">해당 카테고리의 핫딜이 없습니다.</div>`;
+            return;
+        }
+
+        targetDeals.forEach(deal => {
+            const isMatched = keywords.some(kw => deal.title.includes(kw));
+            const matchedHtml = isMatched ? `<span style="color:var(--accent-red);">🔥 직구/키워드</span>` : '';
+
+            // 경과 시간 계산
+            let timeString = '';
+            if (deal.timestamp) {
+                const diffMs = new Date() - new Date(deal.timestamp);
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffDays > 0) timeString = `${diffDays}일 전`;
+                else if (diffHours > 0) timeString = `${diffHours}시간 전`;
+                else if (diffMins > 0) timeString = `${diffMins}분 전`;
+                else timeString = '방금 전';
+            }
+
+            const catLabel = deal.category || '기타';
+
+            const card = `
+                <a href="${deal.link}" target="_blank" class="deal-card">
+                    <img src="${deal.img}" class="deal-img" alt="${catLabel}" onerror="this.src='https://via.placeholder.com/96x96/eee/999?text=No+Image'">
+                    <div class="deal-info">
+                        <div>
+                            <div class="deal-meta">
+                                <div>
+                                    <span class="deal-source">${deal.source}</span>
+                                    <span class="deal-cat">${catLabel}</span>
+                                </div>
+                                ${matchedHtml}
+                            </div>
+                            <h3 class="deal-title">${deal.title}</h3>
+                        </div>
+                        <div class="deal-bottom">
+                            <div class="deal-price">${deal.price}</div>
+                            <div class="deal-time">${timeString ? '<i class="fa-regular fa-clock"></i> ' + timeString : ''}</div>
+                        </div>
+                    </div>
+                </a>
+            `;
+            feedContainer.insertAdjacentHTML('beforeend', card);
+        });
+    }
+
+    // 카테고리 탭 클릭 이벤트 설정
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderFilteredDeals();
+        });
+    });
 
     // 3.2 냉장고 렌더링
     function renderInventory() {
@@ -135,10 +261,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnClass = item.status === 'enough' ? 'status-enough' : 'status-low';
             const btnText = item.status === 'enough' ? '여유' : '부족 !';
 
+            // 이미지 혹은 이모지 표시
+            let iconHtml = '';
+            const emoji = getEmojiForName(item.name);
+            if (emoji) {
+                iconHtml = `<div class="emoji-icon">${emoji}</div>`;
+            } else if (item.img) {
+                iconHtml = `<img src="${item.img}" class="inventory-thumbnail" onerror="this.src='https://via.placeholder.com/48?text=X'">`;
+            } else {
+                iconHtml = `<div class="emoji-icon">📦</div>`; // 기본 상자 이모지
+            }
+
             const html = `
                 <div class="list-item">
                     <div class="inventory-left">
-                        <img src="${item.img}" class="inventory-thumbnail">
+                        ${iconHtml}
                         <span class="item-name">${item.name}</span>
                     </div>
                     <button class="status-toggle ${btnClass}" data-index="${index}">${btnText}</button>
@@ -240,15 +377,28 @@ document.addEventListener('DOMContentLoaded', () => {
         renderShopping();
     });
 
-    // "장보기 완료! 🛒" 버튼: 구매 완료(purchased:true) 된 것들만 일괄 삭제
+    // "장보기 완료! 🛒" 버튼: 구매 완료(purchased:true) 된 것들만 일괄 삭제 및 냉장고 동기화
     document.querySelector('.btn-complete-mode').addEventListener('click', () => {
         const initialLen = shoppingList.length;
+
+        // 장보기 완료된 항목들을 찾아서 냉장고에 롤백 (이름으로 대조)
+        const completedItems = shoppingList.filter(item => item.purchased);
+        completedItems.forEach(buyItem => {
+            const invItem = inventory.find(inv => inv.name === buyItem.name);
+            if (invItem && invItem.status === 'low') {
+                invItem.status = 'enough';
+            }
+        });
+
+        // 남은 리스트만 필터링
         shoppingList = shoppingList.filter(item => !item.purchased);
 
         if (initialLen > shoppingList.length) {
-            syncDB('shoppingList');
-            alert("장보기 목록이 정리되었습니다! 수고하셨습니다 🛒");
-            renderShopping();
+            syncDB('inventory');    // 롤백된 냉장고 상태 저장
+            syncDB('shoppingList'); // 장보기 정리 내역 저장
+            alert("장보기 목록이 정리되었고, 냉장고의 해당 품목들도 다시 '여유' 상태로 돌아갔습니다! 수고하셨습니다 🛒");
+            renderInventory(); // 냉장고 리스트 재랜더링
+            renderShopping();  // 장바구니 재랜더링
         } else {
             alert("완료 체크된 항목이 없습니다.");
         }
@@ -292,10 +442,78 @@ document.addEventListener('DOMContentLoaded', () => {
         input.value = '';
     });
 
-    // --- 4. 초기 구동 ---
-    fetchAndRenderDeals();
-    renderInventory();
-    renderShopping();
-    renderKeywords();
+    // --- 5. 설정 모달 및 테마 기능 ---
+    function setupSettingsModal() {
+        const modal = document.getElementById('settings-modal');
+        const btnOpen = document.getElementById('header-settings');
+        const btnClose = document.querySelector('.btn-close-modal');
+
+        // 열기
+        if (btnOpen && modal) {
+            btnOpen.addEventListener('click', () => {
+                modal.style.display = 'flex';
+            });
+        }
+
+        // 닫기
+        if (btnClose && modal) {
+            btnClose.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
+
+        // 모달 바깥 배경 클릭 시 닫기
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
+
+        // 수동 최신화 확인
+        const btnManualSync = document.getElementById('btn-manual-sync');
+        if (btnManualSync) {
+            btnManualSync.addEventListener('click', () => {
+                btnManualSync.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 확인 중...`;
+                fetchAndRenderDeals().then(() => {
+                    setTimeout(() => {
+                        btnManualSync.innerHTML = `<i class="fa-solid fa-check"></i> 동기화 완료`;
+                        setTimeout(() => {
+                            btnManualSync.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> 수동으로 최신화 확인`;
+                        }, 2000);
+                    }, 500);
+                });
+            });
+        }
+
+        // 가족코드 저장
+        const btnSaveCode = document.getElementById('btn-save-code');
+        if (btnSaveCode) {
+            btnSaveCode.addEventListener('click', () => {
+                alert('가족 코드가 저장되었습니다. (추후 DB 동기화 지원 예정)');
+            });
+        }
+    }
+
+    // --- 6. 초기 구동 ---
+    function init() {
+        setupNavigation();
+        setupSettingsModal();
+        fetchAndRenderDeals();
+        renderInventory();
+        renderShopping();
+        renderKeywords();
+
+        // 초기 홈화면 활성화
+        const viewSections = document.querySelectorAll('.view-section');
+        const navButtons = document.querySelectorAll('.nav-item');
+        viewSections.forEach(sec => sec.classList.remove('active'));
+        navButtons.forEach(b => b.classList.remove('active'));
+
+        document.getElementById('view-home').classList.add('active');
+        document.querySelector('[data-target="view-home"]').classList.add('active');
+    }
+
+    // 앱 시작
+    init();
 
 });

@@ -113,6 +113,43 @@ body {
     margin-bottom: 15px;
 }
 
+/* 카테고리 탭 (상단 슬라이더) */
+.category-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.category-tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome */
+}
+
+.cat-btn {
+    padding: 6px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cat-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 10px rgba(212, 163, 115, 0.3);
+    /* primary-color 기반 그림자 */
+}
+
 .section-desc {
     font-size: 0.9rem;
     color: var(--text-sub);
@@ -184,7 +221,8 @@ body {
     background-color: var(--card-bg);
     display: flex;
     border-top: 1px solid var(--border-color);
-    z-index: 100;
+    z-index: 999;
+    /* 다른 요소에 덮이지 않도록 높임 */
 }
 
 .nav-item {
@@ -199,74 +237,126 @@ body {
     cursor: pointer;
     font-family: inherit;
     transition: color 0.2s;
+    pointer-events: auto;
+    /* 명시적으로 활성 */
 }
 
 .nav-item i {
     font-size: 1.2rem;
     margin-bottom: 4px;
+    pointer-events: none;
+    /* 아이콘 자체 타겟팅 방지 */
 }
 
 .nav-item span {
     font-size: 0.7rem;
     font-weight: 700;
+    pointer-events: none;
+    /* 텍스트 타겟팅 방지 */
 }
 
 .nav-item.active {
     color: var(--primary-color);
 }
 
-/* 8. 핫딜 카드 (뷰 1) */
+/* 8. 핫딜 카드 (뷰 1) - 프리미엄 슬림 리스트 */
 .deal-card {
     background-color: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 8px;
+    /* 곡률을 조금 더 깔끔하게 */
     overflow: hidden;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    /* 가로 배치 슬림 스타일 */
     text-decoration: none;
-    /* a 태그 리셋 */
     color: inherit;
+    height: 96px;
+    /* 고정 높이를 살짝 줄임 (슬림화) */
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.deal-card:active {
+    transform: scale(0.98);
 }
 
 .deal-img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    background-color: #eee;
-    /* 로딩 전 배경 */
+    width: 96px;
+    /* 카드 높이와 동일하게 */
+    height: 96px;
+    object-fit: contain;
+    background-color: var(--card-bg);
+    padding: 6px;
+    border-right: 1px solid var(--border-color);
 }
 
 .deal-info {
-    padding: 12px 15px;
+    flex: 1;
+    padding: 8px 10px;
+    /* 상하 여백 축소 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.deal-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
 .deal-source {
-    font-size: 0.7rem;
-    color: white;
-    background-color: var(--primary-color);
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    background-color: rgba(212, 163, 115, 0.1);
+    /* primary-color 투명도 */
     padding: 2px 6px;
     border-radius: 4px;
-    margin-right: 5px;
     font-weight: 800;
 }
 
+.deal-cat {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    background-color: var(--bg-color);
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
 .deal-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    margin: 8px 0;
+    margin: 0;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     /* 두 줄 말줄임 */
     -webkit-box-orient: vertical;
     overflow: hidden;
+    color: var(--text-main);
+}
+
+.deal-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: auto;
 }
 
 .deal-price {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--accent-red);
     font-weight: 800;
+}
+
+.deal-time {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    font-weight: 600;
 }
 
 /* 9. 리스트 아이템 공통 (냉장고, 장보기, 키워드) */
@@ -330,4 +420,108 @@ body {
     font-size: 3rem;
     margin-bottom: 15px;
     opacity: 0.5;
+}
+
+/* 10. 모달 (설정창) 디자인 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    /* 네비게이션(9999) 위로 올림 */
+    display: none;
+    /* 기본 숨김 상태 보장 */
+
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-sub);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-group label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.settings-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+.settings-help {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    margin-top: 6px;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    margin-bottom: 10px;
+}
+
+.inventory-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.emoji-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }

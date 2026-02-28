@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="style.css">
+    <!-- PWA 설정 추가 -->
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </head>
 
 <body>
@@ -19,10 +26,10 @@
     <div id="app-container">
 
         <!-- 상단 헤더 (타이틀 및 알림 등) -->
-        <header id="app-header">
+        <header id="app-header" style="position: sticky; top: 0; z-index: 900; background: var(--card-bg);">
             <h1 id="header-title">우리집 장보기</h1>
-            <div id="header-settings">
-                <i class="fa-solid fa-gear"></i>
+            <div id="header-settings" style="cursor: pointer; z-index: 999; position: relative; padding: 10px;">
+                <i class="fa-solid fa-gear" style="pointer-events: none;"></i>
             </div>
         </header>
 
@@ -31,6 +38,17 @@
 
             <!-- 뷰 1: 홈 피드 (핫딜) -->
             <section id="view-home" class="view-section active">
+
+                <!-- 카테고리 탭 -->
+                <div class="category-tabs" style="position: relative; z-index: 10;">
+                    <button class="cat-btn active" data-cat="전체">전체</button>
+                    <button class="cat-btn" data-cat="식품">식품</button>
+                    <button class="cat-btn" data-cat="가전">가전</button>
+                    <button class="cat-btn" data-cat="의류">의류</button>
+                    <button class="cat-btn" data-cat="생활">생활</button>
+                    <button class="cat-btn" data-cat="기타">기타</button>
+                </div>
+
                 <div class="feed-container">
                     <!-- 핫딜 카드들이 여기에 동적으로 추가됨 -->
                     <div class="empty-state">
@@ -90,27 +108,70 @@
 
         </main>
 
-        <!-- 하단 네비게이션 탭 -->
-        <nav id="bottom-nav">
-            <button class="nav-item active" data-target="view-home">
-                <i class="fa-solid fa-house"></i>
-                <span>홈 핫딜</span>
-            </button>
-            <button class="nav-item" data-target="view-inventory">
-                <i class="fa-solid fa-refrigerator"></i>
-                <span>냉장고</span>
-            </button>
-            <button class="nav-item" data-target="view-shopping">
-                <i class="fa-solid fa-clipboard-list"></i>
-                <span>장보기</span>
-            </button>
-            <button class="nav-item" data-target="view-keywords">
-                <i class="fa-solid fa-bell"></i>
-                <span>키워드</span>
-            </button>
-        </nav>
+    </div><!-- /app-container -->
 
+    <!-- 설정 모달창 (클릭 방지 우회를 위해 app-container 밖으로 뺌) -->
+    <div id="settings-modal" class="modal-overlay" style="display:none; z-index: 10000; pointer-events: auto;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>환경 설정</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <label>가족 코드 (데이터 연동 키)</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="family-code-input" value="FAMILY_1234" class="settings-input">
+                        <button class="btn btn-primary" id="btn-save-code">저장</button>
+                    </div>
+                    <p class="settings-help">이 코드가 같은 기기끼리 냉장고/장보기가 공유됩니다.</p>
+                </div>
+
+                <div class="settings-group">
+                    <label>핫딜 수집 상태</label>
+                    <p class="status-text">마지막 업데이트: <span id="last-update-time">확인 중...</span></p>
+                    <button class="btn"
+                        style="width:100%; border:1px solid var(--border-color); background:var(--bg-color);"
+                        id="btn-manual-sync">
+                        <i class="fa-solid fa-arrows-rotate"></i> 수동으로 최신화 확인
+                    </button>
+                </div>
+
+                <div class="settings-group">
+                    <label>앱 테마</label>
+                    <div style="display:flex; gap:10px;">
+                        <label><input type="radio" name="theme" value="light" checked> 라이트 모드 (기본)</label>
+                        <label><input type="radio" name="theme" value="dark"> 다크 모드 (준비 중)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- 하단 네비게이션 탭 (app-container 외부, 클릭 보장) -->
+    <nav id="bottom-nav"
+        style="position: fixed; bottom: 0; z-index: 9999; display: flex; width: 100%; max-width: 480px; left: 50%; transform: translateX(-50%); background: var(--card-bg); border-top: 1px solid var(--border-color); pointer-events: auto;">
+        <button id="nav-home" class="nav-item active" data-target="view-home"
+            style="pointer-events: auto; z-index: 10000; flex:1; border:none; background:transparent;">
+            <i class="fa-solid fa-house" style="pointer-events: none;"></i>
+            <span style="pointer-events: none; display:block;">홈 핫딜</span>
+        </button>
+        <button id="nav-inventory" class="nav-item" data-target="view-inventory"
+            style="pointer-events: auto; z-index: 10000; flex:1; border:none; background:transparent;">
+            <i class="fa-solid fa-snowflake" style="pointer-events: none;"></i>
+            <span style="pointer-events: none; display:block;">냉장고</span>
+        </button>
+        <button id="nav-shopping" class="nav-item" data-target="view-shopping"
+            style="pointer-events: auto; z-index: 10000; flex:1; border:none; background:transparent;">
+            <i class="fa-solid fa-clipboard-list" style="pointer-events: none;"></i>
+            <span style="pointer-events: none; display:block;">장보기</span>
+        </button>
+        <button id="nav-keywords" class="nav-item" data-target="view-keywords"
+            style="pointer-events: auto; z-index: 10000; flex:1; border:none; background:transparent;">
+            <i class="fa-solid fa-bell" style="pointer-events: none;"></i>
+            <span style="pointer-events: none; display:block;">키워드</span>
+        </button>
+    </nav>
 
     <!-- Firebase SDK (v9 Compat mode) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
