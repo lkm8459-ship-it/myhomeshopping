@@ -113,7 +113,7 @@ def scrape_fmkorea():
                 "title": title_text,
                 "price": price,
                 "link": link,
-                "img": img_url if img_url else "https://via.placeholder.com/150?text=No+Image",
+                "img": img_url,
                 "source": "FM Korea",
                 "category": get_category(title_text),
                 "timestamp": datetime.now().isoformat()
@@ -138,9 +138,14 @@ def scrape_ppomppu():
             title_text = title_a.get_text(strip=True)
             link = "https://www.ppomppu.co.kr/zboard/" + title_a['href']
             img_node = row.select_one('.baseList-thumb img')
-            img_url = img_node.get('src') if img_node else ""
+            # 뽐뽀는 data-original 속성을 우선적으로 사용 (Lazy Loading 대응)
+            img_url = ""
+            if img_node:
+                img_url = img_node.get('data-original') or img_node.get('src') or ""
+                
             if img_url.startswith('//'): img_url = "https:" + img_url
             
+            # 리퍼/반품 등 가격 정보 추출 개선
             price_match = re.search(r'\(([^)]+)\)', title_text)
             price = price_match.group(1) if price_match else "확인"
             
@@ -193,7 +198,7 @@ def scrape_eomisae():
                 img_url = img_tag.get('src') if img_tag else ""
                 
                 if img_url == "" or "/images/sub.png" in img_url:
-                    img_url = "https://via.placeholder.com/96x96/747cfd/ffffff?text=Eomisae"
+                    img_url = "" # UI에서 브랜드 플레이스홀더 처리
                 elif img_url.startswith('//'):
                     img_url = "https:" + img_url
                 elif img_url.startswith('/'):
@@ -237,7 +242,7 @@ def scrape_clien():
                 "title": title_text,
                 "price": "확인",
                 "link": link,
-                "img": "https://via.placeholder.com/150/D4A373/FFFFFF?text=Clien",
+                "img": "", # 클리앙은 목록 이미지 없음 (UI에서 블루 아이콘 처리)
                 "source": "Clien",
                 "category": get_category(title_text),
                 "timestamp": datetime.now().isoformat()

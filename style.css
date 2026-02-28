@@ -308,6 +308,25 @@ body {
     border-right: 1px solid var(--border-color);
 }
 
+/* 브랜드별 스마트 플레이스홀더 (v1.4) */
+.brand-placeholder {
+    width: 96px;
+    height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    color: white;
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.bg-ppomppu { background-color: #FFADAD; }
+.bg-clien { background-color: #AED6F1; }
+.bg-fmkorea { background-color: #D4A373; }
+.bg-eomisae { background-color: #747CFD; }
+
 .deal-info {
     flex: 1;
     padding: 8px 10px;

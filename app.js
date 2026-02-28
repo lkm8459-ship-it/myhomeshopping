@@ -225,9 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // [프리미엄 플레이스홀더]
-        const NO_IMAGE_URL = 'assets/no_image_placeholder.png';
-
         targetDeals.forEach(deal => {
             const isMatched = keywords.some(kw => deal.title.includes(kw));
             const matchedHtml = isMatched ? `<span style="color:var(--accent-red);">🔥 키워드</span>` : '';
@@ -243,9 +240,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (diffMins > 0) timeString = `${diffMins}분 전`;
             }
 
+            // 브랜드별 플레이스홀더 데이터 (v1.4)
+            const brandConfig = {
+                'Ppomppu': { bg: 'bg-ppomppu', emoji: '🛒' },
+                'Clien': { bg: 'bg-clien', emoji: '💻' },
+                'FM Korea': { bg: 'bg-fmkorea', emoji: '🔥' },
+                'Eomisae': { bg: 'bg-eomisae', emoji: '🐦' }
+            };
+            const config = brandConfig[deal.source] || { bg: '', emoji: '📦' };
+
+            // 클리앙이나 이미지가 없는 경우 처음부터 브랜드 박스 표시
+            let imgHtml = '';
+            if (deal.source === 'Clien' || !deal.img || deal.img.includes('placeholder')) {
+                imgHtml = `<div class="brand-placeholder ${config.bg}">${config.emoji}</div>`;
+            } else {
+                imgHtml = `<img src="${deal.img}" class="deal-img" onerror="window.handleImageError(this, '${deal.source}')">`;
+            }
+
             const card = `
                 <a href="${deal.link}" target="_blank" class="deal-card">
-                    <img src="${deal.img}" class="deal-img" onerror="this.src='${NO_IMAGE_URL}'">
+                    ${imgHtml}
                     <div class="deal-info">
                         <div class="deal-meta">
                             <div><span class="deal-source">${deal.source}</span> <span class="deal-cat">${deal.category || '기타'}</span></div>
@@ -262,6 +276,26 @@ document.addEventListener('DOMContentLoaded', () => {
             feedContainer.insertAdjacentHTML('beforeend', card);
         });
     }
+
+    // 이미지 로딩 실패 시 브랜드 플레이스홀더로 교체 (v1.4)
+    window.handleImageError = function (img, source) {
+        const brandConfig = {
+            'Ppomppu': { bg: 'bg-ppomppu', emoji: '🛒' },
+            'Clien': { bg: 'bg-clien', emoji: '💻' },
+            'FM Korea': { bg: 'bg-fmkorea', emoji: '🔥' },
+            'Eomisae': { bg: 'bg-eomisae', emoji: '🐦' }
+        };
+        const config = brandConfig[source] || { bg: '', emoji: '📦' };
+
+        const parent = img.parentElement;
+        const placeholder = document.createElement('div');
+        placeholder.className = `brand-placeholder ${config.bg}`;
+        placeholder.innerText = config.emoji;
+
+        if (parent) {
+            parent.replaceChild(placeholder, img);
+        }
+    };
 
     document.querySelectorAll('.cat-btn').forEach(btn => {
         btn.addEventListener('click', () => {
